@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Provider Panel | ServicesHub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="#" class="logo">Provider Panel</a>
+        <a href="login.html" class="btn-login" style="background-color:#ef4444">Logout</a>
+    </nav>
+
+    <div class="dashboard-container">
+        <h2>Customer Bookings</h2>
+        <table border="1" style="width:100%; border-collapse: collapse; margin-top:20px; text-align: left;">
+            <thead>
+                <tr style="background-color: #4f46e5; color: white;">
+                    <th style="padding: 10px;">Customer</th>
+                    <th style="padding: 10px;">Service</th>
+                    <th style="padding: 10px;">Status</th>
+                    <th style="padding: 10px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="bookings-table-body">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function loadBookings() {
+            try {
+                const response = await fetch('/api/admin/bookings');
+                const bookings = await response.json();
+                const tableBody = document.getElementById('bookings-table-body');
+                tableBody.innerHTML = '';
+
+                bookings.forEach(b => {
+                    let statusColor = b.status === 'Completed' ? 'green' : (b.status === 'In Progress' ? 'blue' : 'orange');
+
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td style="padding: 10px;">${b.customer_name}</td>
+                            <td style="padding: 10px;">${b.service_name}</td>
+                            <td style="padding: 10px;"><b style="color: ${statusColor}">${b.status}</b></td>
+                            <td style="padding: 10px;">
+                                <select onchange="updateStatus(${b.id}, this.value)" style="padding:5px; border-radius:5px; cursor:pointer; border:1px solid #4f46e5; margin-right:5px;">
+                                    <option value="Pending" ${b.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="In Progress" ${b.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="Completed" ${b.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                </select>
+                                <button onclick="deleteBooking(${b.id})" style="background-color:#ef4444; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error("Bookings load nahi ho sakeen:", error);
+            }
+        }
+
+        async function updateStatus(id, newStatus) {
+            try {
+                const response = await fetch('/api/bookings/status', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ booking_id: id, status: newStatus })
+                });
+
+                if (response.ok) {
+                    alert("Status changed to: " + newStatus);
+                    loadBookings(); 
+                } else {
+                    alert("Update failed!");
+                }
+            } catch (error) {
+                console.error("Error updating status:", error);
+            }
+        }
+
+        async function deleteBooking(id) {
+            if (confirm("Kya aap waqai ye booking khatam karna chahte hain?")) {
+                try {
+                    const response = await fetch(`/api/bookings/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert("Booking delete kar di gayi.");
+                        loadBookings(); 
+                    } else {
+                        alert("Delete karne mein masla aya.");
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                }
+            }
+        }
+
+        window.onload = loadBookings;
+    </script>
+</body>
+</html>

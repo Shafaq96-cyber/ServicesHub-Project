@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ServicesHub | Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="dashboard.html" class="logo">ServicesHub</a>
+    <div class="nav-auth-btns">
+        <a href="login.html" class="btn-login">Login</a>
+        <a href="signup.html" class="btn-signup">Register</a>
+        <button onclick="logout()" class="btn-login" style="background-color: #ef4444; margin-left: 10px; border: none; cursor: pointer; color: white; padding: 8px 15px; border-radius: 5px;">Logout</button>
+    </div>
+</nav>
+
+<header class="hero-section">
+    <h1>Trusted Services, On Demand</h1>
+    <p>Find the best services, and more in your area.</p>
+</header>
+
+<div class="search-container">
+    <input type="text" class="search-bar" placeholder="What service do you need?">
+</div>
+
+<div class="dashboard-container">
+    <h2>Popular Services</h2>
+    <div class="services-grid">
+        </div>
+</div>
+
+<script>
+    // 1. Logout Function
+    function logout() {
+        alert("Logging out...");
+        window.location.href = "login.html";
+    }
+
+    // 2. Services Load karne ka function (Read Operation)
+    async function fetchServices() {
+        try {
+            const response = await fetch('/api/services');
+            const services = await response.json();
+            const servicesGrid = document.querySelector('.services-grid');
+
+            // Dashboard saaf karein taake duplicates na rahein
+            servicesGrid.innerHTML = ''; 
+
+            services.forEach(service => {
+                servicesGrid.innerHTML += `
+                    <div class="card" style="padding:20px; border:1px solid #ddd; border-radius:10px; text-align:center;">
+                        <h3 style="color:#4f46e5">${service.service_name}</h3>
+                        <p>${service.description}</p>
+                        <p><b>Price: Rs. ${service.price}</b></p>
+                        <button class="submit-btn" 
+                                onclick="bookService(${service.id})" 
+                                style="width:100%; cursor:pointer; background-color:#4f46e5; color:white; border:none; padding:10px; border-radius:5px;">
+                            Book Now
+                        </button>
+                    </div>
+                `;
+            });
+        } catch (error) {
+            console.error("Error fetching services:", error);
+        }
+    }
+
+    // 3. Booking karne ka function (Create Operation)
+    async function bookService(serviceId) {
+        const userId = 1; // Sana ki ID
+
+        try {
+            const response = await fetch('/api/book', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, service_id: serviceId })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert("Zabardast! " + data.message);
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (error) {
+            console.error("Booking failed:", error);
+            alert("Server se connection nahi ho saka.");
+        }
+    }
+
+    // Page load hote hi function chalao
+    window.onload = fetchServices;
+</script>
+</body>
+</html>
